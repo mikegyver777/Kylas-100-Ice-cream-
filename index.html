@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ice Cream Prize Game</title>
+<style>
+  :root{
+    --bg1:#FFE5F1; --bg2:#FFF9E0;
+    --pink:#FF4D8D; --pink-soft:#FFB3D1;
+    --green:#22C55E; --green-dark:#15803D;
+    --red:#FF5252; --red-dark:#C62828;
+    --purple:#8B5CF6; --yellow:#FFD93D;
+    --ink:#4B2E83;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Chalkboard SE','Comic Sans MS','Marker Felt',ui-rounded,'Arial Rounded MT Bold',sans-serif;
+    font-size:18px;
+    background:
+      radial-gradient(circle at 15% 20%, #FFD1E8 0 40px, transparent 41px),
+      radial-gradient(circle at 85% 15%, #C9F2FF 0 34px, transparent 35px),
+      radial-gradient(circle at 75% 85%, #FFF3B0 0 44px, transparent 45px),
+      radial-gradient(circle at 10% 80%, #D8FFE3 0 36px, transparent 37px),
+      linear-gradient(180deg,var(--bg1),var(--bg2));
+    min-height:100vh;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;
+    padding:14px;
+  }
+  h1{
+    font-size:clamp(1.7rem,6vw,2.6rem);text-align:center;color:var(--pink);
+    letter-spacing:.5px;
+    text-shadow:2px 2px 0 #fff, 4px 4px 0 var(--pink-soft);
+  }
+  .sub{text-align:center;color:var(--purple);margin:4px 0 14px;font-size:1.05rem;}
+  .card{
+    background:#fff;border:4px solid var(--pink-soft);border-radius:26px;
+    padding:16px;width:100%;max-width:520px;margin-bottom:14px;
+    box-shadow:0 6px 0 var(--pink-soft);
+  }
+  .card h2{font-size:1.25rem;margin-bottom:10px;}
+  input[type=text]{
+    width:100%;font-family:inherit;font-size:1.15rem;
+    border:4px solid var(--pink-soft);border-radius:16px;padding:12px 14px;color:var(--ink);outline:none;
+  }
+  input[type=text]:focus{border-color:var(--pink);}
+  .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;}
+  .opt{
+    border:4px solid #F3E8FF;border-radius:20px;background:#FDFAFF;cursor:pointer;
+    padding:10px 6px;text-align:center;font-size:.95rem;color:var(--ink);
+    font-family:inherit;transition:transform .12s;
+  }
+  .opt .em{font-size:2.3rem;display:block;margin-bottom:2px;}
+  .opt:active{transform:scale(.93);}
+  .opt.sel{border-color:var(--pink);background:#FFE9F3;box-shadow:0 4px 0 var(--pink);}
+  .recipe{
+    text-align:center;font-size:1.05rem;color:var(--purple);
+    background:#F6F0FF;border-radius:16px;padding:10px;margin-bottom:12px;
+  }
+  .btn{
+    font-family:inherit;font-size:1.35rem;border:none;cursor:pointer;
+    border-radius:24px;padding:18px 22px;width:100%;color:#fff;letter-spacing:.5px;
+    transition:transform .1s;
+  }
+  .btn:active{transform:translateY(3px);}
+  .btn-go{background:var(--green);box-shadow:0 6px 0 var(--green-dark);}
+  .btn-go:disabled{background:#cfc8da;box-shadow:0 6px 0 #a99fc0;cursor:not-allowed;}
+  /* ---------- game screen ---------- */
+  #game{display:none;width:100%;max-width:520px;flex-direction:column;align-items:center;}
+  .pct{
+    font-size:clamp(3rem,12vw,4.2rem);color:var(--pink);line-height:1;
+    text-shadow:2px 2px 0 #fff,4px 4px 0 var(--pink-soft);
+  }
+  .pct-label{color:var(--purple);font-size:1.05rem;text-align:center;}
+  .meter-wrap{width:100%;background:#fff;border:4px solid var(--pink-soft);border-radius:999px;padding:5px;margin:8px 0 2px;}
+  .meter{height:28px;border-radius:999px;background:linear-gradient(90deg,var(--pink),var(--purple),var(--green));
+    width:100%;transition:width .5s cubic-bezier(.34,1.56,.64,1);}
+  .stage{position:relative;width:min(66vw,280px);margin:2px auto;}
+  .pct-badge{
+    position:absolute;top:2px;right:-10px;background:#fff;
+    border:4px solid var(--pink);border-radius:999px;padding:6px 14px;
+    font-size:1.5rem;color:var(--pink);box-shadow:0 4px 0 var(--pink-soft);
+    z-index:2;
+  }
+  .stage svg{animation:sway 4s ease-in-out infinite;}
+  @keyframes sway{0%,100%{transform:rotate(-1.5deg);}50%{transform:rotate(1.5deg);}}
+  .seg{transition:opacity .45s ease,transform .45s ease;}
+  .seg.gone{opacity:0;transform:translateY(-16px) scale(.8);}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;margin-top:6px;}
+  .btn-minus{background:var(--red);box-shadow:0 6px 0 var(--red-dark);font-size:1.5rem;}
+  .btn-plus{background:var(--green);box-shadow:0 6px 0 var(--green-dark);font-size:1.5rem;}
+  .btn-minus:disabled,.btn-plus:disabled{background:#cfc8da;box-shadow:0 6px 0 #a99fc0;}
+  .btn small{display:block;font-size:.95rem;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;margin-top:12px;}
+  .btn-small{font-size:1.05rem;padding:14px;background:#fff;color:var(--ink);
+    box-shadow:0 5px 0 var(--pink-soft);border:4px solid var(--pink-soft);}
+  .msg{min-height:2em;text-align:center;font-size:1.2rem;margin-top:10px;}
+  .msg.bad{color:var(--red-dark);}
+  .msg.good{color:var(--green-dark);}
+  /* overlay */
+  .overlay{
+    position:fixed;inset:0;background:rgba(255,236,246,.97);display:none;
+    flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
+    padding:24px 20px 40px;z-index:10;overflow-y:auto;
+  }
+  .overlay .big{font-size:clamp(2rem,8vw,3.2rem);color:var(--pink);
+    text-shadow:2px 2px 0 #fff,4px 4px 0 var(--pink-soft);margin-top:8px;}
+  .ov-pic{width:min(52vw,210px);margin:6px auto;position:relative;}
+  .ov-pic svg{width:100%;height:auto;animation:none;}
+  .ov-pic .pct-badge{font-size:1.2rem;padding:4px 10px;}
+  .overlay .emoji{font-size:3.4rem;margin:4px 0;animation:bounce 1s ease infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  .overlay p{font-size:1.3rem;max-width:420px;margin:8px 0 22px;}
+  .overlay .btn{max-width:320px;}
+  .confetti{position:fixed;top:-20px;font-size:1.8rem;animation:fall 3s linear forwards;z-index:11;pointer-events:none;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);}}
+  @media (prefers-reduced-motion:reduce){
+    .seg,.meter,.btn{transition:none;}
+    .stage svg,.overlay .emoji{animation:none;}
+    .confetti{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<h1>🍦 Ice Cream Prize Game 🍒</h1>
+<p class="sub" id="subTitle">Build your yummy ice cream!</p>
+
+<!-- ============ BUILD SCREEN ============ -->
+<div id="build" style="width:100%;max-width:520px;">
+  <div class="card">
+    <h2>📝 What are we practicing?</h2>
+    <input type="text" id="activity" placeholder="Track, spelling, reading..." maxlength="40">
+  </div>
+
+  <div class="card">
+    <h2>🧇 Pick your base</h2>
+    <div class="opts" id="baseOpts"></div>
+  </div>
+
+  <div class="card">
+    <h2>🍨 Add a scoop?</h2>
+    <div class="opts" id="scoopOpts"></div>
+  </div>
+
+  <div class="card">
+    <h2>🍒 Pick up to 3 toppings</h2>
+    <div class="opts" id="topOpts"></div>
+  </div>
+
+  <div class="recipe" id="recipe">Pick a base to start!</div>
+
+  <button class="btn btn-go" id="startBtn" disabled>Make my ice cream! 🍨</button>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="game">
+  <div class="pct" id="pctNum">100%</div>
+  <div class="pct-label" id="activityLabel">of your ice cream</div>
+  <div class="meter-wrap"><div class="meter" id="meterBar"></div></div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="controls">
+    <button class="btn btn-minus" id="minusBtn">😬 −10%<small>oops!</small></button>
+    <button class="btn btn-plus" id="plusBtn">⭐ +10%<small>great job!</small></button>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <div class="row2">
+    <button class="btn btn-small" id="finishBtn">🏁 Claim prize!</button>
+    <button class="btn btn-small" id="restartBtn">🔄 New ice cream</button>
+  </div>
+</div>
+
+<!-- ============ OVERLAY ============ -->
+<div class="overlay" id="overlay">
+  <div class="big" id="ovTitle"></div>
+  <div class="emoji" id="ovEmoji"></div>
+  <div class="ov-pic" id="ovPic"></div>
+  <p id="ovText"></p>
+  <button class="btn btn-go" id="ovBtn">Play again! 🔄</button>
+</div>
+
+<script>
+/* ================= data ================= */
+var BASES = [
+  {id:'waffle', name:'Waffle cone', em:'🧇', fill:'#F5B455', stroke:'#D18A2E', kind:'cone', pattern:true},
+  {id:'regular',name:'Regular cone',em:'🍦', fill:'#E89B4B', stroke:'#C07430', kind:'cone', pattern:false},
+  {id:'cup',    name:'Cup',         em:'🥤', fill:'#FF9EC0', stroke:'#E4739F', kind:'cup',  pattern:false}
+];
+var SCOOPS = [
+  {id:'yes', name:'Yes, scoop!', em:'🍨'},
+  {id:'no',  name:'No scoop',    em:'🚫'}
+];
+var TOPPINGS = [
+  {id:'cherry',   name:'Cherry',        em:'🍒'},
+  {id:'sprinkle', name:'Sprinkles',     em:'🎉'},
+  {id:'whip',     name:'Whipped cream', em:'☁️'},
+  {id:'choco',    name:'Choc drizzle',  em:'🍫'},
+  {id:'nuts',     name:'Nuts',          em:'🥜'}
+];
+var SCOOP_COLOR = {fill:'#FFF3DC', hi:'#FFFBF0'};
+
+var selBase=null, selScoop=null, selTops=[];
+var count=10;          /* pieces remaining, 10 pieces = 100% */
+var segParts=[];       /* segParts[i] = 'base' | 'scoop' | 'topping' for messages */
+var baseWord='cone';
+
+function $(id){ return document.getElementById(id); }
+
+/* ================= build screen ================= */
+function makeOpts(containerId, items, onPick){
+  var c=$(containerId);
+  items.forEach(function(it){
+    var b=document.createElement('button');
+    b.className='opt'; b.type='button';
+    b.innerHTML='<span class="em">'+it.em+'</span>'+it.name;
+    b.addEventListener('click',function(){ onPick(it,b,c); updateRecipe(); });
+    c.appendChild(b);
+  });
+}
+makeOpts('baseOpts',BASES,function(it,b,c){
+  selBase=it;
+  Array.prototype.forEach.call(c.children,function(x){x.classList.remove('sel');});
+  b.classList.add('sel');
+});
+makeOpts('scoopOpts',SCOOPS,function(it,b,c){
+  selScoop=it.id;
+  Array.prototype.forEach.call(c.children,function(x){x.classList.remove('sel');});
+  b.classList.add('sel');
+});
+makeOpts('topOpts',TOPPINGS,function(it,b){
+  var i=-1;
+  selTops.forEach(function(t,idx){ if(t.id===it.id) i=idx; });
+  if(i>=0){ selTops.splice(i,1); b.classList.remove('sel'); }
+  else if(selTops.length<3){ selTops.push(it); b.classList.add('sel'); }
+});
+
+/* ---- split 10 pieces across whatever was picked ---- */
+function allocate(){
+  var nTop = selTops.length;
+  var hasScoop = (selScoop==='yes');
+  var remaining = 10 - nTop;
+  var nBase, nScoop;
+  if(hasScoop){
+    nBase = Math.round(remaining*3/7);      /* keep the 30/40 feel */
+    if(nBase<1) nBase=1;
+    nScoop = remaining-nBase;
+    if(nScoop<1){ nScoop=1; nBase=remaining-1; }
+  }else{
+    nBase = remaining; nScoop = 0;
+  }
+  return {nBase:nBase, nScoop:nScoop, nTop:nTop};
+}
+
+function updateRecipe(){
+  var r=$('recipe');
+  if(!selBase || !selScoop){
+    r.textContent = !selBase ? 'Pick a base to start!' : 'Scoop: yes or no?';
+    $('startBtn').disabled=true;
+    return;
+  }
+  var a=allocate();
+  var parts=[selBase.name+' = '+(a.nBase*10)+'%'];
+  if(a.nScoop) parts.push('Scoop = '+(a.nScoop*10)+'%');
+  if(a.nTop)   parts.push('Toppings = '+(a.nTop*10)+'%');
+  r.textContent = parts.join('  •  ')+'  →  100%';
+  $('startBtn').disabled=false;
+}
+
+$('startBtn').addEventListener('click',function(){
+  $('build').style.display='none';
+  $('game').style.display='flex';
+  var act=$('activity').value.replace(/^\s+|\s+$/g,'');
+  $('activityLabel').textContent = act ? 'of your ice cream — '+act : 'of your ice cream';
+  $('subTitle').textContent='Do great = win it back! Slip up = it melts!';
+  baseWord = (selBase.kind==='cup') ? 'cup' : 'cone';
+  buildSVG(); count=10; render(); $('msg').textContent='';
+});
+
+/* ================= SVG ice cream ================= */
+/* Helper: n horizontal slices covering yTop..yBottom, stacked so
+   LOWER slices get LOWER segment numbers (removed last). */
+function slices(startIdx, n, yTop, yBottom, fill, extraTopSVG){
+  var h=(yBottom-yTop)/n, out='';
+  for(var k=0;k<n;k++){
+    var i=startIdx+k;                       /* k=0 is the BOTTOM slice */
+    var y=yBottom-(k+1)*h;
+    var extra=(k===n-1 && extraTopSVG)?extraTopSVG:'';
+    out+='<g class="seg" data-i="'+i+'"><rect x="40" y="'+y+'" width="220" height="'+(h+1)+'" fill="'+fill+'"/>'+extra+'</g>';
+  }
+  return out;
+}
+
+function buildSVG(){
+  var a=allocate();
+  var cn=selBase, f=SCOOP_COLOR;
+  var hasScoop=a.nScoop>0;
+  segParts=[];
+  var i;
+  for(i=0;i<a.nBase;i++) segParts.push('base');
+  for(i=0;i<a.nScoop;i++) segParts.push('scoop');
+  for(i=0;i<a.nTop;i++) segParts.push('topping');
+
+  var svg='<svg viewBox="0 0 300 430" xmlns="http://www.w3.org/2000/svg" aria-label="Your ice cream">';
+  svg+='<defs>';
+  if(cn.kind==='cone'){
+    svg+='<clipPath id="cpBase"><polygon points="88,255 212,255 150,415"/></clipPath>';
+  }else{
+    svg+='<clipPath id="cpBase"><polygon points="92,258 208,258 196,405 104,405"/></clipPath>';
+  }
+  svg+='<clipPath id="cpScoop"><circle cx="150" cy="180" r="92"/></clipPath>';
+  svg+='</defs>';
+  svg+='<ellipse cx="150" cy="418" rx="70" ry="9" fill="rgba(75,46,131,.15)"/>';
+
+  /* ---- BASE ---- */
+  var yB1 = hasScoop ? 255 : 258, yB2 = (cn.kind==='cone') ? 415 : 405;
+  if(cn.kind==='cone'){ yB1=255; yB2=415; } else { yB1=258; yB2=405; }
+  svg+='<g clip-path="url(#cpBase)">';
+  svg+=slices(0, a.nBase, yB1, yB2, cn.fill, null);
+  if(cn.kind==='cone' && cn.pattern){
+    svg+='<g pointer-events="none">'
+      +'<line x1="95" y1="260" x2="150" y2="410" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'<line x1="205" y1="260" x2="150" y2="410" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'<line x1="150" y1="255" x2="150" y2="415" stroke="'+cn.stroke+'" stroke-width="3" opacity=".6"/>'
+      +'<line x1="90" y1="290" x2="210" y2="290" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'<line x1="98" y1="322" x2="202" y2="322" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'<line x1="110" y1="354" x2="190" y2="354" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'<line x1="122" y1="386" x2="178" y2="386" stroke="'+cn.stroke+'" stroke-width="3"/>'
+      +'</g>';
+  }
+  if(cn.kind==='cone'){
+    svg+='<polygon points="88,255 212,255 150,415" fill="none" stroke="'+cn.stroke+'" stroke-width="4"/>';
+  }else{
+    svg+='<polygon points="92,258 208,258 196,405 104,405" fill="none" stroke="'+cn.stroke+'" stroke-width="4"/>';
+  }
+  svg+='</g>';
+  if(cn.kind==='cup'){
+    /* cup rim sits on top of everything base-related */
+    svg+='<rect x="84" y="248" width="132" height="14" rx="7" fill="'+cn.stroke+'"/>';
+  }
+
+  /* ---- SCOOP ---- */
+  if(hasScoop){
+    svg+='<g clip-path="url(#cpScoop)">';
+    var hiTop='<ellipse cx="118" cy="120" rx="26" ry="14" fill="'+f.hi+'" opacity=".85"/>';
+    svg+=slices(a.nBase, a.nScoop, 86, 272, f.fill, hiTop);
+    svg+='</g>';
+  }
+
+  /* ---- TOPPINGS ---- */
+  for(i=0;i<a.nTop;i++){
+    svg+=toppingSVG(selTops[i], i, a.nBase+a.nScoop+i, hasScoop);
+  }
+
+  /* ---- sad puddle ---- */
+  svg+='<g id="puddle" style="opacity:0;transition:opacity .5s;">'
+    +'<ellipse cx="150" cy="400" rx="85" ry="16" fill="'+f.fill+'" stroke="#EBDFC8" stroke-width="3"/>'
+    +'<text x="150" y="360" text-anchor="middle" font-size="36">😢</text>'
+    +'</g>';
+  svg+='</svg>';
+  $('stage').innerHTML=svg+'<div class="pct-badge" id="stagePct">100%</div>';
+}
+
+function toppingSVG(t, slot, segIdx, hasScoop){
+  var inner='';
+  if(t.id==='cherry'){
+    inner='<circle cx="150" cy="86" r="14" fill="#E0314B" stroke="#B01F36" stroke-width="3"/>'
+      +'<path d="M150 74 Q158 56 172 52" fill="none" stroke="#3E7C3A" stroke-width="4" stroke-linecap="round"/>';
+  }else if(t.id==='sprinkle'){
+    var cols=['#FF5E7E','#22C55E','#FFC53F','#7AA7FF','#B679F2'];
+    var xs=[105,128,151,174,192], ys=[130,112,140,116,134], rs=[20,-30,10,40,-15];
+    for(var i=0;i<5;i++){
+      inner+='<rect x="'+xs[i]+'" y="'+ys[i]+'" width="16" height="6" rx="3" fill="'+cols[i]
+        +'" transform="rotate('+rs[i]+' '+xs[i]+' '+ys[i]+')"/>';
+    }
+  }else if(t.id==='whip'){
+    inner='<ellipse cx="150" cy="96" rx="46" ry="20" fill="#FFFDF6" stroke="#EBDFC8" stroke-width="3"/>'
+      +'<ellipse cx="150" cy="82" rx="28" ry="14" fill="#FFFDF6" stroke="#EBDFC8" stroke-width="3"/>';
+  }else if(t.id==='choco'){
+    inner='<path d="M75 150 Q95 120 115 150 T155 150 T195 150 T225 145" fill="none" stroke="#7A4A2B" stroke-width="9" stroke-linecap="round"/>';
+  }else{
+    var nc=['#B9834F','#A06B3A','#C89463','#8F6234'];
+    var nx=[112,140,168,192], ny=[128,110,132,118];
+    for(var j=0;j<4;j++){
+      inner+='<ellipse cx="'+nx[j]+'" cy="'+ny[j]+'" rx="9" ry="6" fill="'+nc[j]
+        +'" transform="rotate('+(j*35)+' '+nx[j]+' '+ny[j]+')"/>';
+    }
+  }
+  var dy = slot===0 ? 26 : slot===1 ? 8 : -12;
+  if(!hasScoop) dy += 130;   /* no scoop: toppings sit on the base */
+  return '<g class="seg" data-i="'+segIdx+'" transform="translate(0 '+dy+')">'+inner+'</g>';
+}
+
+/* ================= game logic ================= */
+function meltMsg(part){
+  var m={topping:['A topping melted! 😬','There goes a topping!'],
+         scoop:['The scoop is melting! 🫠','Ice cream is disappearing!'],
+         base:['The '+baseWord+' is going! 😱','Careful — almost gone!']};
+  var arr=m[part]; return arr[Math.floor(Math.random()*arr.length)];
+}
+function backMsg(part){
+  var m={topping:['Topping is back! 🎉','Yay! Topping restored!'],
+         scoop:['Scoop is growing back! 💪','More ice cream! Keep going!'],
+         base:['The '+baseWord+' is back! 👏','Building it back up!']};
+  var arr=m[part]; return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function render(){
+  var segs=document.querySelectorAll('.seg');
+  Array.prototype.forEach.call(segs,function(el){
+    if(+el.getAttribute('data-i') >= count) el.classList.add('gone');
+    else el.classList.remove('gone');
+  });
+  $('pctNum').textContent=(count*10)+'%';
+  var badge=$('stagePct');
+  if(badge) badge.textContent=(count*10)+'%';
+  $('meterBar').style.width=(count*10)+'%';
+  $('minusBtn').disabled = (count===0);
+  $('plusBtn').disabled  = (count===10);
+  var p=$('puddle');
+  if(p) p.style.opacity = (count===0) ? 1 : 0;
+}
+
+$('minusBtn').addEventListener('click',function(){
+  if(count===0) return;
+  count--;
+  setMsg(meltMsg(segParts[count]),'bad');
+  render();
+  if(count===0) showOverlay(false);
+});
+$('plusBtn').addEventListener('click',function(){
+  if(count===10) return;
+  setMsg(backMsg(segParts[count]),'good');
+  count++;
+  render();
+});
+function setMsg(t,cls){
+  var m=$('msg'); m.textContent=t; m.className='msg '+cls;
+}
+
+/* ================= finish / reset ================= */
+$('finishBtn').addEventListener('click',function(){ showOverlay(count>0); });
+$('restartBtn').addEventListener('click',resetAll);
+$('ovBtn').addEventListener('click',resetAll);
+
+function resetAll(){
+  $('overlay').style.display='none';
+  $('game').style.display='none';
+  $('build').style.display='block';
+  $('subTitle').textContent='Build your yummy ice cream!';
+  count=10; selBase=null; selScoop=null; selTops=[];
+  ['baseOpts','scoopOpts','topOpts'].forEach(function(id){
+    Array.prototype.forEach.call($(id).children,function(x){x.classList.remove('sel');});
+  });
+  updateRecipe();
+  window.scrollTo(0,0);
+}
+
+function showOverlay(won){
+  var pct=count*10;
+  /* copy the ice cream exactly as it looks now — melted parts stay hidden */
+  $('ovPic').innerHTML = $('stage').innerHTML;
+  if(won){
+    $('ovTitle').textContent='You earned it!';
+    $('ovEmoji').textContent='🍦🎉';
+    $('ovText').textContent='You get to EAT '+pct+'% of your ice cream — exactly what you see here! '
+      +(pct===100 ? 'A PERFECT ice cream — every single bite!' : 'Great job — next time go for 100%!');
+    confetti();
+  }else{
+    $('ovTitle').textContent='All melted…';
+    $('ovEmoji').textContent='🫠';
+    $('ovText').textContent='0% left to eat this time. You can try again and win it ALL back!';
+  }
+  $('overlay').style.display='flex';
+}
+
+function confetti(){
+  var ems=['🍦','🍒','🎉','⭐','🍨','🎊'];
+  for(var i=0;i<26;i++){
+    var s=document.createElement('div');
+    s.className='confetti';
+    s.textContent=ems[Math.floor(Math.random()*ems.length)];
+    s.style.left=(Math.random()*100)+'vw';
+    s.style.animationDelay=(Math.random()*1.2)+'s';
+    document.body.appendChild(s);
+    (function(el){ setTimeout(function(){ el.remove(); },4500); })(s);
+  }
+}
+
+updateRecipe();
+</script>
+</body>
+</html>
