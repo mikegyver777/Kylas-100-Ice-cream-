@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,7 +145,7 @@
   </div>
 
   <div class="card">
-    <h2>🍒 Pick up to 3 toppings</h2>
+    <h2>🍒 Pick your toppings — all, some, or none!</h2>
     <div class="opts" id="topOpts"></div>
   </div>
 
@@ -234,7 +235,7 @@ makeOpts('topOpts',TOPPINGS,function(it,b){
   var i=-1;
   selTops.forEach(function(t,idx){ if(t.id===it.id) i=idx; });
   if(i>=0){ selTops.splice(i,1); b.classList.remove('sel'); }
-  else if(selTops.length<3){ selTops.push(it); b.classList.add('sel'); }
+  else{ selTops.push(it); b.classList.add('sel'); }
 });
 
 /* ---- split 10 pieces across whatever was picked ---- */
@@ -379,7 +380,17 @@ function toppingSVG(t, slot, segIdx, hasScoop){
     inner='<ellipse cx="150" cy="96" rx="46" ry="20" fill="#FFFDF6" stroke="#EBDFC8" stroke-width="3"/>'
       +'<ellipse cx="150" cy="82" rx="28" ry="14" fill="#FFFDF6" stroke="#EBDFC8" stroke-width="3"/>';
   }else if(t.id==='choco'){
-    inner='<path d="M75 150 Q95 120 115 150 T155 150 T195 150 T225 145" fill="none" stroke="#7A4A2B" stroke-width="9" stroke-linecap="round"/>';
+    inner='<path d="M78 150 Q88 98 150 92 Q212 98 222 150'
+      +' Q214 163 206 151'
+      +' Q198 144 193 151 L193 176 Q187 193 181 176 L181 151'
+      +' Q172 143 164 151 Q157 164 149 151'
+      +' Q141 143 136 151 L136 188 Q130 205 124 188 L124 152'
+      +' Q115 144 107 152 Q100 165 92 152'
+      +' Q84 145 78 150 Z"'
+      +' fill="#7A4A2B" stroke="#5C3720" stroke-width="3" stroke-linejoin="round"/>'
+      +'<ellipse cx="122" cy="112" rx="20" ry="8" fill="#96613B" opacity=".8"/>'
+      +'<ellipse cx="181" cy="196" rx="4.5" ry="7" fill="#7A4A2B"/>'
+      +'<ellipse cx="124" cy="212" rx="4.5" ry="7" fill="#7A4A2B"/>';
   }else{
     var nc=['#B9834F','#A06B3A','#C89463','#8F6234'];
     var nx=[112,140,168,192], ny=[128,110,132,118];
@@ -388,7 +399,7 @@ function toppingSVG(t, slot, segIdx, hasScoop){
         +'" transform="rotate('+(j*35)+' '+nx[j]+' '+ny[j]+')"/>';
     }
   }
-  var dy = slot===0 ? 26 : slot===1 ? 8 : -12;
+  var dy = 26 - slot*10;   /* stack up to 5 toppings without full overlap */
   if(!hasScoop) dy += 130;   /* no scoop: toppings sit on the base */
   return '<g class="seg" data-i="'+segIdx+'" transform="translate(0 '+dy+')">'+inner+'</g>';
 }
